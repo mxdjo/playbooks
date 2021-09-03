@@ -9,7 +9,7 @@
        name: wget
        state: present
 
-   - name: Install docker packages
+   - name: Install dependencies packages
      apt:
        pkg:
         - apt-transport-https
