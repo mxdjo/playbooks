@@ -17,12 +17,28 @@
         url: https://pkg.jenkins.io/debian-stable/jenkins.io.key 
         state: present
 
-   - name: add jenkins repository
-     ansible.builtin.apt_repository:
-       repo: deb http://pkg.jenkins-ci.org/debian binary
+   - name: add jenkins repository part 1 - create file
+     ansible.builtin.file:
+       path: /etc/apt/sources.list.d/jenkins.list
+       state: touch
+
+   - name: add jenkins repository part 2 - add line
+     ansible.builtin.lineinfile:
+       path: /etc/apt/sources.list.d/jenkins.list
+       line: deb http://pkg.jenkins-ci.org/debian-stable binary/
        state: present
 
    - name: install jenkins
      ansible.builtin.apt:
       name: jenkins
       state: present
+      update_cache: yes
+
+   - name: get initial admin password
+     ansible.builtin.shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+     register: jenkinspasswd
+     changed_when: false
+  
+   - name: display the password
+     debug: 
+       var: jenkinspasswd.stdout
