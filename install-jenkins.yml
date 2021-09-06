@@ -4,7 +4,25 @@
   become_method: sudo
 
   tasks:
-   - name: Ensure  wget is installed
+   - name: Ensure wget and openjdk are installed
      ansible.builtin.apt:
-       name: wget
+       name: "{{ item }}"
        state: present
+     with_items:
+        - wget
+        - openjdk-11-jdk
+  
+   - name: add jenkins gpg key
+     ansible.builtin.apt_key:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key 
+        state: present
+
+   - name: add jenkins repository
+     ansible.builtin.apt_repository:
+       repo: deb http://pkg.jenkins-ci.org/debian binary
+       state: present
+
+   - name: install jenkins
+     ansible.builtin.apt:
+      name: jenkins
+      state: present
