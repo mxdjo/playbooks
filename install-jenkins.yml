@@ -27,6 +27,7 @@
        path: /etc/apt/sources.list.d/jenkins.list
        line: deb http://pkg.jenkins-ci.org/debian-stable binary/
        state: present
+## A simplifier avec ansible.builtin.apt_repository
 
    - name: install jenkins
      ansible.builtin.apt:
