@@ -1,0 +1,92 @@
+---
+- hosts: X.X.X.X
+  become: yes
+  become_method: sudo
+  vars_files:
+   - vars/default.yml
+   # Not put this and got error msg": "The task includes an option with an undefined variable
+
+  tasks:
+  #Apache Configuration
+    - name: Install LAMP Packages
+      ansible.builtin.apt: 
+        name: "{{ item }}"
+        state: latest
+        update_cache: yes
+      with_items: 
+        - apache2
+        - mariadb-server
+        - python3-pymysql
+        - php
+        - php-mysql
+        - libapache2-mod-php
+
+    - name: Create document root
+      ansible.builtin.file:
+        path: "/var/www/html/{{ http_host }}"
+        state: directory
+        owner: "{{ apache_user }}"
+        mode: '0755'
+# improve here by searching apache user and placing it
+
+
+    - name: Set up Apache virtualhost
+      ansible.builtin.template:
+        src: "files_apache/vhost_template.conf.j2"
+        dest: "/etc/apache2/sites-available/{{ http_conf }}"
+      notify: Reload Apache
+
+    - name: Enable new site
+      ansible.builtin.shell: /usr/sbin/a2ensite {{ http_conf }}
+      notify: Reload Apache
+
+    - name: Disable default Apache site
+      shell: /usr/sbin/a2dissite 000-default.conf
+      when: disable_default
+      notify: Reload Apache
+
+  # MySQL Configuration
+    - name: Sets the root password
+      mysql_user:
+        name: root
+        password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Removes all anonymous user accounts
+      mysql_user:
+        name: ''
+        host_all: yes
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Removes the MySQL test database
+      mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+  # UFW Configuration
+    - name: "UFW - Allow HTTP on port {{ http_port }}"
+      ufw:
+        rule: allow
+        port: "{{ http_port }}"
+        proto: tcp
+
+  # PHP Info Page
+    - name: Sets Up PHP Info Page
+      ansible.builtin.template:
+        src: "files_apache/info.php.j2"
+        dest: "/var/www/html/{{ http_host }}/info.php"
+
+  handlers:
+    - name: Reload Apache
+      service:
+        name: apache2
+        state: reloaded
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted

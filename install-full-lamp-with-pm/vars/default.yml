@@ -1,0 +1,7 @@
+---
+mysql_root_password: "testpassword#"
+apache_user: "www-data"
+http_host: "ledomaine.com"
+http_conf: "ledomaine.com.conf"
+http_port: "80"
+disable_default: true
